@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+import sys
 import requests
 from datetime import date
 import json
 import time
 import tweepy
 import config
+import traceback
 
 
 def tweet(msg):
@@ -15,7 +17,13 @@ def tweet(msg):
         api.update_status(msg)
     except:
         msg += ' '
-        api.update_status(msg)
+        try:
+            api.update_status(msg)
+        except tweepy.TweepError as e:
+            if e.api_code == 187:  # duplicate status
+                pass
+            else:
+                raise
 
 
 def fetch_data():
@@ -49,8 +57,8 @@ def fetch_data():
             for session in centre['sessions']:
                 cur_date = session['date']
                 min_age_limit = session['min_age_limit']
-                if session['available_capacity'] > 0:
-                    # print('Available')
+                if session['available_capacity'] > 0 and min_age_limit == 18:
+                    # we stopped caring about older people because of new rate limits
                     msg = f'Vaccine appointment available for: \n\n' \
                           f' - Age: {min_age_limit}+ \n' \
                           f' - On: {cur_date}\n' \
@@ -65,5 +73,8 @@ if __name__ == '__main__':
     # time.sleep(120)
     print('Started bot...')
     while True:
-        fetch_data()
+        try:
+            fetch_data()
+        except Exception as exc:
+            traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
         time.sleep(14400)
