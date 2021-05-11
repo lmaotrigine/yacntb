@@ -5,9 +5,12 @@
 <a href="https://github.com/darthshittious/yacntb/network/members"><img src="https://img.shields.io/github/forks/darthshittious/yacntb" alt="Repo Forks"></a> 
 <a href="https://github.com/darthshittious/yacntb/stargazers"><img src="https://img.shields.io/github/stars/darthshittious/yacntb" alt="Repo Stargazers"></a>
 <a href="https://github.com/darthshittious/yacntb/blob/main/LICENSE"><img src="https://img.shields.io/github/license/darthshittious/yacntb" alt="Repo License"></a>
+<a href="https://twitter.com/YACNTB"><img src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fdarthshittious%2Fyacntb" alt="Twitter Handle"></a>
 </p>
 
 Yet another CoWIN notification Twitter bot.
+
+You can find my instance at [@YACNTB](https://twitter.com/YACNTB)
 
 ## Features
 
@@ -25,6 +28,7 @@ cd yacntb
 # Optional
 python3.9 -m venv venv
 source venv/bin/activate
+chmod +x main.py
 ###
 pip install -U -r requirements.txt
 cp config.example.py config.py
@@ -47,7 +51,7 @@ PRs are welcome. For major changes start a discussion or open an issue first to 
 
 ## Support 
 
-Please star to show support, and share this project with your friends 💙
+Please star to show support, follow the bot on Twitter, and share this project with your friends 💙
 
 <a href="https://www.buymeacoffee.com/darthshittious" target="_blank">
 <img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy me a coffee" data-canonical-src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" width="270" />
