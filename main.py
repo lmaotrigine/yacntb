@@ -4,10 +4,17 @@ import requests
 from datetime import date, datetime
 import json
 import time
+import logging
 import tweepy
 import config
 import traceback
 import sqlite3
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='yacntb.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+log.addHandler(handler)
 
 db = sqlite3.connect('update_logs.db')
 c = db.cursor()
@@ -36,13 +43,7 @@ def tweet(msg):
         api.update_status(msg)
     except:
         msg += ' '
-        try:
-            api.update_status(msg)
-        except tweepy.TweepError as e:
-            if e.api_code == 187:  # duplicate status
-                pass
-            else:
-                raise
+        api.update_status(msg)
 
 
 def fetch_data():
@@ -64,6 +65,7 @@ def fetch_data():
         if dt is not None:
             dt = datetime.strptime(dt[0], DATE_FMT)
             if (cur_time - dt).total_seconds() < SLEEP_TIME:
+                print(f'District ID {district_id} updated at {dt} which is less than 4 hours ago. Skipping...')
                 continue
         cur.close()
 
@@ -73,6 +75,7 @@ def fetch_data():
             'date': day,
         }
         resp = requests.get(url, params=params, headers=headers)
+        log.debug('Fetching %s returned status %s', district_id, resp.status_code)
         data = resp.json()
 
         time.sleep(3)
@@ -97,7 +100,7 @@ def fetch_data():
                           f' - Fee: {fee} \n\n' \
                           f'In {name}, {block_name}, {district_name}, {state}, {pincode}\n\n' \
                           f'{generate_hashtags(state)}'
-                    print(msg)
+                    log.info(f'Found slot:\n\n{msg}')
                     tweet(msg)
                     time.sleep(30)
         cur = db.cursor()
@@ -117,7 +120,8 @@ if __name__ == '__main__':
                 print('All districts fetched. Sleeping for 4 hours...')
                 print('=====================================================')
             except Exception as exc:
-                traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
+                log.exception(traceback.format_exc())
+                traceback.print_exc()
             time.sleep(SLEEP_TIME)
     finally:
         db.close()
