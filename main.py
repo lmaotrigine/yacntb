@@ -63,7 +63,7 @@ def fetch_data():
         dt = cur.fetchone()
         if dt is not None:
             dt = datetime.strptime(dt[0], DATE_FMT)
-            if (dt - cur_time).total_seconds() < SLEEP_TIME:
+            if (cur_time - dt).total_seconds() < SLEEP_TIME:
                 continue
         cur.close()
 
