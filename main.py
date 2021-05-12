@@ -57,10 +57,12 @@ def fetch_data():
             for session in centre['sessions']:
                 cur_date = session['date']
                 min_age_limit = session['min_age_limit']
-                if session['available_capacity'] > 0 and min_age_limit == 18:
+                available = session ['available_capacity']
+                if available > 0 and min_age_limit == 18:
                     # we stopped caring about older people because of new rate limits
                     msg = f'Vaccine appointment available for: \n\n' \
                           f' - Age: {min_age_limit}+ \n' \
+                          f' - Slots Available: {available}\n' \
                           f' - On: {cur_date}\n' \
                           f' - Fee: {fee} \n\n' \
                           f'In {name}, {block_name}, {district_name}, {state}, {pincode}'
