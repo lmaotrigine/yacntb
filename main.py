@@ -9,6 +9,12 @@ import config
 import traceback
 
 
+def generate_hashtags(state):
+    # TODO: Maybe there's some more relevant ones to add here?
+    state = state.replace(' ', '')
+    return f'#COVID19 #COVID19Vaccine #COVIDIndia #Vaccination #{state}'
+
+
 def tweet(msg):
     auth = tweepy.OAuthHandler(config.consumer_key, config.consumer_secret)
     auth.set_access_token(config.access_token, config.access_token_secret)
@@ -65,7 +71,8 @@ def fetch_data():
                           f' - Slots Available: {available}\n' \
                           f' - On: {cur_date}\n' \
                           f' - Fee: {fee} \n\n' \
-                          f'In {name}, {block_name}, {district_name}, {state}, {pincode}'
+                          f'In {name}, {block_name}, {district_name}, {state}, {pincode}\n\n' \
+                          f'{generate_hashtags(state)}'
                     print(msg)
                     tweet(msg)
                     time.sleep(30)
