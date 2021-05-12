@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 import sys
 import requests
-from datetime import date
+from datetime import date, datetime
 import json
 import time
 import tweepy
 import config
 import traceback
+import sqlite3
 
+db = sqlite3.connect('update_logs.db')
+c = db.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS update_logs (
+                 district_id TEXT PRIMARY KEY,
+                 last_updated TEXT
+              );
+          ''')
+c.close()
+
+SLEEP_TIME = 14_400  # 4 hours
+DATE_FMT = '%d/%m/%Y %H:%M:%S'
 
 def generate_hashtags(state):
     # TODO: Maybe there's some more relevant ones to add here?
@@ -38,12 +50,22 @@ def fetch_data():
 
     current_date = date.today()
     day = current_date.strftime('%d-%m-%Y')
+    cur_time = datetime.utcnow()
     districts = fetch['districts']
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0'
     }
     for element in districts:
         district_id = str(element['district_id']).zfill(3)
+        cur = conn.cursor()
+        cur.execute('SELECT last_updated FROM update_logs WHERE district_id = ?', (district_id,))
+        dt = cur.fetchone()
+        if dt is not None:
+            dt = datetime.strptime(dt[0], DATE_FMT)
+            if (dt - cur_time).total_seconds() < SLEEP_TIME:
+                continue
+        cur.close()
+
         url = f'https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict'
         params = {
             'district_id': district_id,
@@ -51,7 +73,10 @@ def fetch_data():
         }
         resp = requests.get(url, params=params, headers=headers)
         data = resp.json()
+
         time.sleep(3)
+        cur = db.cursor()
+        cur.execute('REPLACE INTO update_logs (district_id, last_updated) VALUES (?, ?);', (district_id, cur_time.strftime(DATE_FMT)))
         for centre in data['centers']:
             block_name = centre['block_name']
             district_name = centre['district_name']
@@ -81,9 +106,13 @@ def fetch_data():
 if __name__ == '__main__':
     # time.sleep(120)
     print('Started bot...')
-    while True:
-        try:
-            fetch_data()
-        except Exception as exc:
-            traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
-        time.sleep(14400)
+    try:
+        while True:
+            try:
+                fetch_data()
+            except Exception as exc:
+                traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
+            time.sleep(SLEEP_TIME)
+    finally:
+        db.close()
+
