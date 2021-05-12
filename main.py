@@ -16,6 +16,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS update_logs (
                  last_updated TEXT
               );
           ''')
+db.commit()
 c.close()
 
 SLEEP_TIME = 14_400  # 4 hours
@@ -57,7 +58,7 @@ def fetch_data():
     }
     for element in districts:
         district_id = str(element['district_id']).zfill(3)
-        cur = conn.cursor()
+        cur = db.cursor()
         cur.execute('SELECT last_updated FROM update_logs WHERE district_id = ?', (district_id,))
         dt = cur.fetchone()
         if dt is not None:
@@ -75,8 +76,6 @@ def fetch_data():
         data = resp.json()
 
         time.sleep(3)
-        cur = db.cursor()
-        cur.execute('REPLACE INTO update_logs (district_id, last_updated) VALUES (?, ?);', (district_id, cur_time.strftime(DATE_FMT)))
         for centre in data['centers']:
             block_name = centre['block_name']
             district_name = centre['district_name']
@@ -101,6 +100,10 @@ def fetch_data():
                     print(msg)
                     tweet(msg)
                     time.sleep(30)
+        cur = db.cursor()
+        cur.execute('REPLACE INTO update_logs (district_id, last_updated) VALUES (?, ?);', (district_id, cur_time.strftime(DATE_FMT)))
+        db.commit()
+        cur.close()
 
 
 if __name__ == '__main__':
@@ -110,6 +113,9 @@ if __name__ == '__main__':
         while True:
             try:
                 fetch_data()
+                print('=====================================================')
+                print('All districts fetched. Sleeping for 4 hours...')
+                print('=====================================================')
             except Exception as exc:
                 traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
             time.sleep(SLEEP_TIME)
