@@ -5,6 +5,7 @@ from datetime import date, datetime
 import json
 import time
 import logging
+from logging.handlers import RotatingFileHandler
 import tweepy
 import config
 import traceback
@@ -12,7 +13,8 @@ import sqlite3
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='yacntb.log', encoding='utf-8', mode='w')
+max_bytes = 32 * 1024 * 1024  # 32 MiB
+handler = RotatingFileHandler(filename='yacntb.log', encoding='utf-8', mode='w', maxBytes=max_bytes, backupCount=5)
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 log.addHandler(handler)
 
@@ -26,7 +28,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS update_logs (
 db.commit()
 c.close()
 
-SLEEP_TIME = 14_400  # 4 hours
+SLEEP_TIME = 28_800  # 8 hours
 DATE_FMT = '%d/%m/%Y %H:%M:%S'
 
 def generate_hashtags(state):
@@ -101,6 +103,7 @@ def fetch_data():
                           f'In {name}, {block_name}, {district_name}, {state}, {pincode}\n\n' \
                           f'{generate_hashtags(state)}'
                     log.info(f'Found slot:\n\n{msg}')
+                    msg.replace('Dadra and Nagar Haveli', 'DNH')  # shorten to fit limits
                     tweet(msg)
                     time.sleep(30)
         cur = db.cursor()
@@ -122,7 +125,8 @@ if __name__ == '__main__':
             except Exception as exc:
                 log.exception(traceback.format_exc())
                 traceback.print_exc()
-            time.sleep(SLEEP_TIME)
+            else:    
+                time.sleep(SLEEP_TIME)
     finally:
         db.close()
 
